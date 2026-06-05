@@ -89,9 +89,13 @@ ticketdashboard2026@gmail.com
     msg["From"] = sender_email
     msg["To"] = employee_email
 
+    print("EMAIL_ADDRESS =", sender_email)
+    print("EMAIL_PASSWORD =", sender_password)
+
     server = smtplib.SMTP(
         "smtp.gmail.com",
-        587
+        587,
+        timeout=10
     )
 
     server.starttls()
