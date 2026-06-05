@@ -170,7 +170,9 @@ async function classifyTicket() {
 
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+
+    console.log(responseText);
 
     document.getElementById("categoryResult").innerHTML =
         data.predicted_category;
