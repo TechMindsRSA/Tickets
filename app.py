@@ -1,11 +1,14 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 import pickle
 import json
 import os
 import sqlite3
 from textblob import TextBlob
+from responses import generate_response
+from notifications import ( send_admin_email, send_employee_resolution_email )
 
 app = Flask(__name__)
+app.secret_key = "ticket_dashboard_secret_2026"
 
 # Load model and vectorizer
 with open("model.pkl", "rb") as model_file:
@@ -19,28 +22,53 @@ with open("vectorizer.pkl", "rb") as vec_file:
 def home():
     return render_template("index.html")
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username == "admin" and password == "1234567890":
+
+            session["admin"] = True
+
+            return redirect("/dashboard")
+
+        return "Invalid Credentials"
+
+    return render_template("login.html")
 
 # Admin dashboard route
 @app.route("/dashboard")
 def dashboard():
 
+    if not session.get("admin"):
+        return redirect("/login")
+
     conn = sqlite3.connect("tickets.db")
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT id, ticket_text, category, priority
+    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status
     FROM tickets
     ORDER BY id DESC
     """)
 
     tickets = cursor.fetchall()
+    print(tickets)
+    alert_tickets = [
+    ticket for ticket in tickets
+    if ticket[7] in ["High", "Critical"]
+    ]
 
     # Analytics
     total_tickets = len(tickets)
 
-    high_count = sum(1 for t in tickets if t[3] == "High")
-    medium_count = sum(1 for t in tickets if t[3] == "Medium")
-    low_count = sum(1 for t in tickets if t[3] == "Low")
+    high_count = sum(1 for t in tickets if t[7] == "High")
+    medium_count = sum(1 for t in tickets if t[7] == "Medium")
+    low_count = sum(1 for t in tickets if t[7] == "Low")
 
     conn.close()
 
@@ -50,21 +78,69 @@ def dashboard():
         total_tickets=total_tickets,
         high_count=high_count,
         medium_count=medium_count,
-        low_count=low_count
+        low_count=low_count,
+        notification_count=total_tickets,
+        alert_tickets=alert_tickets
     )
+
+@app.route("/update_status/<int:ticket_id>/<status>")
+def update_status(ticket_id, status):
+
+    conn = sqlite3.connect("tickets.db")
+    cursor = conn.cursor()
+
+    #update status
+    cursor.execute("""
+    UPDATE tickets
+    SET status=?
+    WHERE id=?
+    """, (status, ticket_id))
+
+    #if ticket is resolved notify employee
+    if status == "Resolved":
+
+        cursor.execute("""
+        SELECT employee_name, employee_email, ticket_text
+        FROM tickets
+        WHERE id=?
+        """, (ticket_id,))
+
+        employee = cursor.fetchone()
+
+        send_employee_resolution_email(
+                employee[1],  # employee_email
+                employee[0],  # employee_name
+                employee[2]   # ticket_text
+            )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/dashboard")
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
 
 # Classify ticket route
 @app.route("/classify", methods=["POST"])
 def classify_ticket():
 
     data = request.json
+    name = data["name"]
+    employeeId = data["employeeId"]
+    department = data["department"]
+    employeeEmail = data["employeeEmail"]
     original_text = data["text"]
 
     # Auto-correct spelling
-    ticket_text = str(TextBlob(original_text).correct())
+    corrected_text = str(TextBlob(original_text).correct())
 
     # Vectorize input
-    text_vector = vectorizer.transform([ticket_text])
+    text_vector = vectorizer.transform([corrected_text])
 
     # Predict category
     prediction = model.predict(text_vector)[0]
@@ -72,21 +148,21 @@ def classify_ticket():
     # Priority detection
 
     critical_keywords = [
-    "production stopped",
-    "server down",
+    "production has stopped",
+    "server is down",
     "system outage",
     "network outage",
     "cannot work",
-    "business down"
+    "business is down"
     ]
 
     high_priority_keywords = [
     "not working",
-    "computer not working",
-    "laptop not working",
+    "computer is not working",
+    "laptop is not working",
     "internet down",
     "vpn issue",
-    "printer not working",
+    "printer is not working",
     "harassment",
     "harassed",
     "urgent",
@@ -106,7 +182,7 @@ def classify_ticket():
     "issue"
     ]
 
-    ticket_lower = ticket_text.lower()
+    ticket_lower = original_text.lower()
 
     priority = "Low"
 
@@ -125,12 +201,17 @@ def classify_ticket():
         if word in ticket_lower and priority not in ["Critical", "High"]:
             priority = "Medium"
 
+    ai_response = generate_response(
+        prediction, priority)
+
     # Final result
     result = {
-        "ticket": ticket_text,
+        "ticket": original_text,
         "predicted_category": prediction,
-        "priority": priority
+        "priority": priority,
+        "response": ai_response
     }
+
     
 
     # Save to SQLite database
@@ -138,13 +219,45 @@ def classify_ticket():
     cursor = conn.cursor()
 
     cursor.execute("""
-    INSERT INTO tickets (ticket_text, category, priority)
-    VALUES (?, ?, ?)
-    """, (ticket_text, prediction, priority))
+    INSERT INTO tickets (
+    employee_name,
+    employee_id,
+    department, 
+    employee_email, 
+    ticket_text, 
+    category, 
+    priority,
+    status
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, 
+    (name, employeeId, department, employeeEmail, original_text, prediction, priority, "Open"))
 
     conn.commit()
     conn.close()
+    if priority in ["High", "Critical"]:
+
+        print("HIGH PRIORITY DETECTED")
+        send_admin_email(
+        name,
+        employeeId,
+        department,
+        original_text,
+        prediction,
+        priority
+        )
     return jsonify(result)
+
+
+
+
+
+
+@app.route("/test")
+def test():
+    return "Test route works"
+
+print(app.url_map)
 
 if __name__ == "__main__":
     app.run(debug=True)

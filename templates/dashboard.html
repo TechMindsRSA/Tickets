@@ -54,17 +54,22 @@
         border-collapse:collapse;
         border-radius:15px;
         overflow:hidden;
+        table-layout:fixed;
+        word-wrap:break-word;
     }
 
     th{
         background:#1e293b;
         color:white;
         padding:15px;
+        text-align:center;
     }
 
     td{
         padding:15px;
         border-bottom:1px solid #eee;
+        text-align:center;
+        vertical-align:middle;
     }
 
     .high{
@@ -88,6 +93,65 @@
         border-radius:20px;
     }
 
+
+    .notification-wrapper{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:100%;
+    margin:40px auto;
+    }
+
+    .notification-card{
+    width:50%;
+    background:white;
+    border-radius:25px;
+    padding:40px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    }
+
+    .notification-icon-container{
+    position:relative;
+    display:inline-block;
+    margin-bottom:10px;
+    }
+
+    .notification-icon{
+    font-size:50px;
+    }
+
+    .floating-badge{
+    position:absolute;
+    top:-10px;
+    right:-15px;
+    background:red;
+    color:white;
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    }
+
+    .notification-card h2{
+    font-size:40px;
+    margin:10px 0;
+    }
+
+    .notification-card p{
+    font-size:18px;
+    color:#5b7280;
+    }
+
+    .chart-container{
+    width:350px;
+    height:350px;
+    margin:30px auto;
+    }
+
     </style>
 
 </head>
@@ -97,6 +161,114 @@
 <h1 class="header">
     Enterprise Service Desk Dashboard
 </h1>
+
+<div class="notification-wrapper">
+
+    <div class="notification-card">
+
+        <div class="notification-icon-container">
+
+    <span class="notification-icon">
+        🔔
+    </span>
+
+    <span class="floating-badge">
+        {{ notification_count }}
+    </span>
+
+    </div>  
+
+        <h2>
+            Notifications
+            <span class="notification-badge">
+                {{ notification_count }}
+            </span>
+        </h2>
+
+        <p>
+            You have
+            <strong>{{ notification_count }}</strong>
+            Priority tickets requiring attention.
+        </p>
+
+    </div>
+
+</div>
+
+<details style="
+background:white;
+padding:20px;
+border-radius:15px;
+margin-bottom:30px;
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+">
+
+<summary style="
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+">
+
+View Alert Tickets
+
+</summary>
+
+<br>
+
+{% for ticket in alert_tickets %}
+
+<div style="
+background:#fee2e2;
+padding:15px;
+margin-bottom:10px;
+border-radius:10px;
+">
+
+<strong>
+{{ ticket[7] }}
+</strong>
+
+<br><br>
+
+{{ ticket[5] }}
+
+<br><br>
+
+<b>{{ ticket[1] }}</b>
+({{ ticket[2] }})
+
+</div>
+
+{% endfor %}
+
+</details>
+
+<div style="margin-bottom:20px;">
+
+    <a href="/"
+    style="
+    background:#2563eb;
+    color:white;
+    padding:10px 20px;
+    border-radius:10px;
+    text-decoration:none;
+    margin-right:10px;
+    ">
+    Home
+    </a>
+
+    <a href="/logout"
+    style="
+    background:#dc2626;
+    color:white;
+    padding:10px 20px;
+    border-radius:10px;
+    text-decoration:none;
+    ">
+    Logout
+    </a>
+
+</div>
 
 <div class="cards">
 
@@ -153,10 +325,16 @@ Back to Home
 <thead>
 
 <tr>
+
 <th>ID</th>
+<th>Name</th>
+<th>Employee ID</th>
+<th>Department</th>
+<th>Employee Email</th>
 <th>Ticket</th>
 <th>Category</th>
 <th>Priority</th>
+<th>Status</th>
 </tr>
 
 </thead>
@@ -167,25 +345,73 @@ Back to Home
 
 <tr>
 
-<td>{{ ticket[0] }}</td>
+    <td>{{ ticket[0] }}</td>
+    <td>{{ ticket[1] }}</td>
+    <td>{{ ticket[2] }}</td>
+    <td>{{ ticket[3] }}</td>
+    <td>{{ ticket[4] }}</td>
+    <td>{{ ticket[5] }}</td>
+    <td>{{ ticket[6] }}</td>
 
-<td>{{ ticket[1] }}</td>
+    <td>
 
-<td>{{ ticket[2] }}</td>
+        {% if ticket[7] == "Critical" %}
+            <span class="high">High</span>
 
-<td>
+        {% elif ticket[7] == "High" %}
+            <span class="high">Critical</span>
 
-{% if ticket[3] == "High" %}
-<span class="high">High</span>
+        {% elif ticket[7] == "Medium" %}
+            <span class="medium">Medium</span>
 
-{% elif ticket[3] == "Medium" %}
-<span class="medium">Medium</span>
+        {% else %}
+            <span class="low">
+            Low
+            </span>
+        {% endif %}
 
-{% else %}
-<span class="low">Low</span>
-{% endif %}
+    </td>
 
-</td>
+    <td>
+        {% if ticket[8] == "Open" %}
+
+            <a href="/update_status/{{ ticket[0] }}/In Progress"
+            style="
+            background:#f59e0b;
+            color:white;
+            padding:8px 15px;
+            border-radius:20px;
+            text-decoration:none;
+            ">
+            Open
+            </a>
+
+        {% elif ticket[8] == "In Progress" %}
+
+            <a href="/update_status/{{ ticket[0] }}/Resolved"
+            style="
+            background:#2563eb;
+            color:white;
+            padding:8px 15px;
+            border-radius:20px;
+            text-decoration:none;
+            ">
+            In Progress
+            </a>
+
+        {% else %}
+
+            <span style="
+            background:#22c55e;
+            color:white;
+            padding:8px 15px;
+            border-radius:20px;
+            ">
+            Resolved
+            </span>
+
+        {% endif %}
+    </td>
 
 </tr>
 

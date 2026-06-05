@@ -42,6 +42,32 @@ body{
     margin-bottom:30px;
 }
 
+.employee-info{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.employee-info input{
+    width:100%;
+    padding:15px;
+    border:2px solid #e2e8f0;
+    border-radius:15px;
+    font-size:15px;
+    transition:.3s;
+}
+
+.employee-info input:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.15);
+}
+
+.employee-info input:last-child{
+    grid-column:1 / span 2;
+}
+
 textarea{
     width:100%;
     min-height:180px;
@@ -127,4 +153,102 @@ textarea:focus{
     width: 350px;
     height: 350px;
     margin: 30px auto;
+}
+
+.notification-container{
+    display:flex;
+    justify-content:center;
+    margin:30px 0;
+}
+
+.notification-box{
+    text-align:center;
+    background:white;
+    width:70%;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.15);
+    font-size:32px;
+    font-weight:700;
+}
+
+.notification-badge{
+    background:red;
+    color:white;
+    border-radius:50%;
+    padding:8px 18px;
+    margin-left:10px;
+    font-size:22px;
+}
+
+.notification-text{
+    margin-top:15px;
+    font-size:18px;
+    font-weight:500;
+    color:#64748b;
+}
+.notification-wrapper{
+    display:flex;
+    justify-content:center;
+    margin:40px 0;
+}
+
+.notification-card{
+    width:90%;
+    background:white;
+    border-radius:20px;
+    padding:40px;
+    text-align:center;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+}
+
+.notification-icon{
+    font-size:60px;
+    margin-bottom:10px;
+}
+
+.notification-card h2{
+    font-size:48px;
+    font-weight:700;
+    color:#0f172a;
+    margin-bottom:15px;
+}
+
+.notification-card p{
+    font-size:20px;
+    color:#64748b;
+}
+
+.notification-badge{
+    background:red;
+    color:white;
+    border-radius:50px;
+    padding:6px 16px;
+    font-size:24px;
+    margin-left:10px;
+    vertical-align:middle;
+}
+
+.notification-icon-container{
+    position:relative;
+    display:inline-block;
+}
+
+.notification-icon{
+    font-size:70px;
+}
+
+.floating-badge{
+    position:absolute;
+    top:-10px;
+    right:-15px;
+    background:red;
+    color:white;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
 }

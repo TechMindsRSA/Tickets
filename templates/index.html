@@ -39,6 +39,28 @@ href="{{ url_for('static', filename='style.css') }}">
         <p class="subtitle">
             HR • IT • Finance • Operations
         </p>
+        
+    <div class="employee-info">
+
+        <input
+                type="text"
+                id="employeeName"
+                placeholder="Full Name">
+
+        <input
+            type="text"
+            id="employeeId"
+            placeholder="Employee ID">
+
+        <input
+            type="text"
+            id="department"
+            placeholder="Department">
+        <input
+            type="email"
+            id="employeeEmail"
+            placeholder="Employee Email">
+    </div>    
 
         <textarea
             id="ticketText"
@@ -53,8 +75,8 @@ href="{{ url_for('static', filename='style.css') }}">
 
         </button>
 
-        <a href="/dashboard" class="btn-admin">
-            Admin Dashboard
+        <a href="/login" class="btn-admin">
+            Admin Login
         </a>
 
         <div class="result-section">
@@ -91,6 +113,18 @@ href="{{ url_for('static', filename='style.css') }}">
 
             </div>
 
+            <div class="result-card">
+
+    <span class="result-label">
+        AI Response:
+    </span>
+
+    <p id="responseResult">
+        Waiting...
+    </p>
+
+</div>
+
         </div>
 
         <div class="footer">
@@ -104,6 +138,17 @@ href="{{ url_for('static', filename='style.css') }}">
 <script>
 
 async function classifyTicket() {
+    const name =
+        document.getElementById("employeeName").value;
+
+    const employeeId =
+        document.getElementById("employeeId").value;
+
+    const department =
+    document.getElementById("department").value;
+
+    const employeeEmail =
+        document.getElementById("employeeEmail").value;
 
     const text =
         document.getElementById("ticketText").value;
@@ -116,7 +161,12 @@ async function classifyTicket() {
             "Content-Type": "application/json"
         },
 
-        body: JSON.stringify({ text })
+        body: JSON.stringify({ 
+            name,
+            employeeId,
+            department,
+            employeeEmail,
+            text })
 
     });
 
@@ -127,6 +177,9 @@ async function classifyTicket() {
 
     document.getElementById("priorityResult").innerHTML =
         data.priority;
+
+    document.getElementById("responseResult").innerHTML =
+        data.response;
 }
 
 </script>
