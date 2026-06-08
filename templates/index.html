@@ -138,6 +138,7 @@ href="{{ url_for('static', filename='style.css') }}">
 <script>
 
 async function classifyTicket() {
+
     const name =
         document.getElementById("employeeName").value;
 
@@ -145,7 +146,7 @@ async function classifyTicket() {
         document.getElementById("employeeId").value;
 
     const department =
-    document.getElementById("department").value;
+        document.getElementById("department").value;
 
     const employeeEmail =
         document.getElementById("employeeEmail").value;
@@ -154,25 +155,24 @@ async function classifyTicket() {
         document.getElementById("ticketText").value;
 
     const response = await fetch("/classify", {
-
         method: "POST",
 
         headers: {
             "Content-Type": "application/json"
         },
 
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             name,
             employeeId,
             department,
             employeeEmail,
-            text })
-
+            text
+        })
     });
 
-    const responseText = await response.text();
+    const data = await response.json();
 
-    console.log(responseText);
+    console.log(data);
 
     document.getElementById("categoryResult").innerHTML =
         data.predicted_category;
@@ -183,7 +183,6 @@ async function classifyTicket() {
     document.getElementById("responseResult").innerHTML =
         data.response;
 }
-
 </script>
 
 </body>

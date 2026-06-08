@@ -42,6 +42,8 @@ Please review this ticket immediately.
 
     server.starttls()
 
+    print("Connecting to Gmail...")
+
     server.login(
         sender_email,
         sender_password
@@ -100,6 +102,7 @@ ticketdashboard2026@gmail.com
 
     server.starttls()
 
+    print("Connecting to Gmail...")
     server.login(
         sender_email,
         sender_password

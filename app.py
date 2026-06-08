@@ -196,7 +196,7 @@ def classify_ticket():
         # High priority
         for word in high_priority_keywords:
             if word in ticket_lower and priority != "Critical":
-            priority = "High"
+                priority = "High"
 
         # Medium priority
         for word in medium_priority_keywords:
