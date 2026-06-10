@@ -1,61 +1,46 @@
-from http import server
-import smtplib
-from email.mime.text import MIMEText
 import os
+import resend
 
-def send_admin_email(name, employeeId, department, ticket, category, priority):
+# Load Resend API Key
+resend.api_key = os.getenv("RESEND_API_KEY")
 
-    sender_email = os.getenv("EMAIL_ADDRESS")
+print("RESEND_API_KEY =", os.getenv("RESEND_API_KEY"))
 
-    sender_password = os.getenv("EMAIL_PASSWORD")
 
-    admin_email = "217046843@edu.vut.ac.za"
+def send_admin_email(
+    name,
+    employeeId,
+    department,
+    ticket,
+    category,
+    priority
+):
 
-    subject = f"New {priority} Ticket"
+    print("Sending admin email...")
 
-    body = f"""
-Enterprise Service Desk Alert
+    response = resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": ["phadedumiie@gmail.com"],
+        "subject": f"New {priority} Ticket",
+        "html": f"""
+        <h2>Enterprise Service Desk Alert</h2>
 
-Employee Name: {name}
-Employee ID: {employeeId}
-Department: {department}
+        <p><strong>Employee Name:</strong> {name}</p>
+        <p><strong>Employee ID:</strong> {employeeId}</p>
+        <p><strong>Department:</strong> {department}</p>
 
-Category: {category}
-Priority: {priority}
+        <p><strong>Category:</strong> {category}</p>
+        <p><strong>Priority:</strong> {priority}</p>
 
-Ticket Description:
-{ticket}
+        <p><strong>Ticket Description:</strong></p>
 
-Please review this ticket immediately.
-"""
+        <p>{ticket}</p>
+        """
+    })
 
-    msg = MIMEText(body)
+    print("RESEND RESPONSE:", response)
+    print("Admin email sent!")
 
-    msg["Subject"] = subject
-    msg["From"] = "Enterprise Service Desk <ticketdashboard2026@gmail.com>"
-    msg["To"] = admin_email
-
-    server = smtplib.SMTP(
-        "smtp.gmail.com",
-        587
-    )
-
-    server.starttls()
-
-    print("Connecting to Gmail...")
-
-    server.login(
-        sender_email,
-        sender_password
-    )
-
-    print("Sending email...")
-
-    server.send_message(msg)
-
-    print("Email sent successfully!")
-
-    server.quit()
 
 def send_employee_resolution_email(
     employee_email,
@@ -63,55 +48,33 @@ def send_employee_resolution_email(
     ticket_text
 ):
 
-    sender_email = os.getenv("EMAIL_ADDRESS")
+    print("Sending employee resolution email...")
 
-    sender_password = os.getenv("EMAIL_PASSWORD")
+    response = resend.Emails.send({
+        "from": "onboarding@resend.dev",
+        "to": [employee_email],
+        "subject": "Enterprise Service Desk - Ticket Resolution Notice",
+        "html": f"""
+        <h2>Enterprise Service Desk</h2>
 
-    subject = "Enterprise Service Desk - Ticket Resolution Notice"
+        <p>Hello {employee_name},</p>
 
-    body = f"""
-Hello {employee_name},
+        <p>Your support ticket has been resolved.</p>
 
-We are pleased to inform you that your support request has been resolved.
+        <p><strong>Ticket:</strong></p>
 
-Ticket:
-{ticket_text}
+        <p>{ticket_text}</p>
 
-If you are still experiencing issues, please submit a new support request.
+        <p>
+        If the issue persists, please submit a new support request.
+        </p>
 
-Kind Regards,
+        <p>
+        Kind Regards,<br>
+        Enterprise Service Desk Team
+        </p>
+        """
+    })
 
-Enterprise Service Desk Team
-ticketdashboard2026@gmail.com
-"""
-
-    msg = MIMEText(body)
-
-    msg["Subject"] = subject
-    msg["From"] = sender_email
-    msg["To"] = employee_email
-
-    print("EMAIL_ADDRESS =", sender_email)
-    print("EMAIL_PASSWORD =", sender_password)
-
-    server = smtplib.SMTP(
-        "smtp.gmail.com",
-        587,
-        timeout=10
-    )
-
-    server.starttls()
-
-    print("Connecting to Gmail...")
-    server.login(
-        sender_email,
-        sender_password
-    )
-
-    print("Sending employee email...")
-
-    server.send_message(msg)
-
-    print("Employee notified successfully!")
-
-    server.quit()
+    print("RESEND RESPONSE:", response)
+    print("Employee email sent!")

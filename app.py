@@ -96,6 +96,8 @@ def update_status(ticket_id, status):
     WHERE id=?
     """, (status, ticket_id))
 
+    conn.commit()
+
     #if ticket is resolved notify employee
     if status == "Resolved":
 
@@ -114,7 +116,7 @@ def update_status(ticket_id, status):
             )
         except Exception as e:
             print("EMPLOYEE EMAIL FAILED:", e)
-    conn.commit()
+ 
     conn.close()
 
     return redirect("/dashboard")
@@ -240,17 +242,17 @@ def classify_ticket():
         if priority in ["High", "Critical"]:
 
             print("HIGH PRIORITY DETECTED")
-            #try:
-                #send_admin_email(
-                    #name,
-                    #employeeId,
-                    #department,
-                    #original_text,
-                    #prediction,
-                    #priority
-                #)
-            #except Exception as e:
-            #    print("ADMIN EMAIL FAILED:", e)
+            try:
+                send_admin_email(
+                    name,
+                    employeeId,
+                    department,
+                    original_text,
+                    prediction,
+                    priority
+                )
+            except Exception as e:
+                print("ADMIN EMAIL FAILED:", e)
         
         return jsonify(result)
     
