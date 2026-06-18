@@ -64,25 +64,69 @@ def dashboard():
     ]
 
     # Analytics
+
     total_tickets = len(tickets)
 
     high_count = sum(1 for t in tickets if t[7] == "High")
     medium_count = sum(1 for t in tickets if t[7] == "Medium")
     low_count = sum(1 for t in tickets if t[7] == "Low")
+    critical_count = sum(1 for t in tickets if t[7] == "Critical")
 
+
+    open_count = sum(1 for t in tickets if t[8] == "Open")
+    resolved_count = sum(1 for t in tickets if t[8] == "Resolved")
     conn.close()
 
-    return render_template(
-        "dashboard.html",
-        tickets=tickets,
-        total_tickets=total_tickets,
-        high_count=high_count,
-        medium_count=medium_count,
-        low_count=low_count,
-        notification_count=total_tickets,
-        alert_tickets=alert_tickets
-    )
+    from collections import Counter
 
+    # get all ticket categories (column index 6)
+    categories = [ticket[6] for ticket in tickets]
+
+    # count each type
+    category_counts = Counter(categories)
+    
+    top_category = None
+    if category_counts:
+        top_category = category_counts.most_common(1)[0][0]
+    
+    # ✅ Automated summary
+    summary_text = ""
+
+    if total_tickets == 0:
+        summary_text = "No tickets have been recorded."
+    else:
+        summary_text = f"There are {total_tickets} tickets in total. "
+
+        if open_count > resolved_count:
+            summary_text += "More tickets are open than resolved. Immediate attention is required. "
+        else:
+            summary_text += "Tickets are being handled efficiently. "
+
+        if critical_count > 0:
+            summary_text += f"There are {critical_count} critical issues that need urgent resolution. "
+
+        if top_category:
+            summary_text += f"The most active department is {top_category}."
+
+    return render_template(
+    "dashboard.html",
+    tickets=tickets,
+    category_counts=category_counts,
+    top_category=top_category,
+    summary_text=summary_text,
+
+    total_tickets=total_tickets,
+    high_count=high_count,
+    medium_count=medium_count,
+    low_count=low_count,
+    critical_count=critical_count,
+
+    open_count=open_count,
+    resolved_count=resolved_count,
+
+    notification_count=total_tickets,
+    alert_tickets=alert_tickets
+    )
 @app.route("/update_status/<int:ticket_id>/<status>")
 def update_status(ticket_id, status):
 
@@ -120,6 +164,170 @@ def update_status(ticket_id, status):
     conn.close()
 
     return redirect("/dashboard")
+
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from flask import send_file
+from flask import request
+import sqlite3
+import io
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+
+@app.route('/download_summary')
+def download_summary():
+
+    department = request.args.get('department')
+
+    conn = sqlite3.connect("tickets.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status
+    FROM tickets
+    """)
+
+    tickets = cursor.fetchall()
+    # ✅ Filter by department if selected
+    if department:
+        tickets = [t for t in tickets if t[6] == department]
+
+
+    # ✅ Analytics (same as dashboard)
+    total_tickets = len(tickets)
+
+    high_count = sum(1 for t in tickets if t[7] == "High")
+    medium_count = sum(1 for t in tickets if t[7] == "Medium")
+    low_count = sum(1 for t in tickets if t[7] == "Low")
+    critical_count = sum(1 for t in tickets if t[7] == "Critical")
+
+    open_count = sum(1 for t in tickets if t[8] == "Open")
+    resolved_count = sum(1 for t in tickets if t[8] == "Resolved")
+
+    from collections import Counter
+    categories = [t[6] for t in tickets]
+    category_counts = Counter(categories)
+
+    top_category = None
+    if category_counts:
+        top_category = category_counts.most_common(1)[0][0]
+
+    # ✅ recreate summary_text here
+
+    summary_text = ""
+
+    if total_tickets == 0:
+        summary_text = "No tickets have been recorded."
+    else:
+        summary_text = f"There are {total_tickets} tickets in total. "
+
+    if open_count > resolved_count:
+        summary_text += "More tickets are open than resolved. Immediate attention is required. "
+    else:
+        summary_text += "Tickets are being handled efficiently. "
+
+    if critical_count > 0:
+        summary_text += f"There are {critical_count} critical issues that need urgent resolution. "
+
+    if top_category:
+        summary_text += f"The most active department is {top_category}."
+
+    conn.close()
+
+    # ✅ Create PDF
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+
+    pdf.setFont("Helvetica-Bold", 16)
+    title = "Enterprise Service Desk Report"
+
+    if department:
+        title = f"{department} Department Report"
+
+    pdf.drawString(50, 750, title)
+
+    y = 720
+
+    # ✅ OVERVIEW TABLE
+    overview_data = [
+        ["Metric", "Value"],
+        ["Total Tickets", total_tickets],
+        ["Open Tickets", open_count],
+        ["Resolved Tickets", resolved_count],
+        ["Critical Tickets", critical_count],
+    ]
+
+    overview_table = Table(overview_data)
+    overview_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.grey),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+    ]))
+
+    overview_table.wrapOn(pdf, 400, 200)
+    overview_table.drawOn(pdf, 50, y-120)
+
+    y -= 160
+
+
+    # ✅ PRIORITY TABLE
+    priority_data = [
+        ["Priority", "Count"],
+        ["High", high_count],
+        ["Medium", medium_count],
+        ["Low", low_count],
+    ]
+
+    priority_table = Table(priority_data)
+    priority_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.darkblue),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+    ]))
+
+    priority_table.wrapOn(pdf, 400, 200)
+    priority_table.drawOn(pdf, 50, y-120)
+
+    y -= 160
+
+
+    # ✅ DEPARTMENT BLOCK
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Department Insight")
+    y -= 20
+
+    pdf.setFont("Helvetica", 12)
+    pdf.drawString(70, y, f"Top Department: {top_category}")
+
+    y -= 40
+
+
+    # ✅ SUMMARY BLOCK
+    pdf.setFont("Helvetica-Bold", 12)
+    pdf.drawString(50, y, "Summary")
+    y -= 20
+
+    pdf.setFont("Helvetica", 12)
+
+    lines = summary_text.split(". ")
+
+    for line in lines:
+        if line.strip():
+            pdf.drawString(70, y, line.strip())
+            y -= 20
+
+
+    pdf.save()
+
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="weekly_summary.pdf",
+        mimetype='application/pdf'
+    )
+
 
 @app.route("/logout")
 def logout():
