@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 import pickle
 import json
@@ -54,12 +56,25 @@ def dashboard():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status
+    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status,created_at
     FROM tickets
     ORDER BY id DESC
     """)
-
     tickets = cursor.fetchall()
+
+    cursor.execute("""
+    SELECT created_at, COUNT(*)
+    FROM tickets
+    GROUP BY created_at
+    ORDER BY created_at
+    """)
+
+    date_data = cursor.fetchall()
+
+    dates = [row[0] for row in date_data]
+    counts = [row[1] for row in date_data]
+    
+
     print(tickets)
     alert_tickets = [
     ticket for ticket in tickets
@@ -110,6 +125,7 @@ def dashboard():
 
         if top_category:
             summary_text += f"The most active department is {top_category}."
+    conn.close()
 
     return render_template(
     "dashboard.html",
@@ -123,6 +139,8 @@ def dashboard():
     medium_count=medium_count,
     low_count=low_count,
     critical_count=critical_count,
+    dates=dates,
+    counts=counts,
 
     open_count=open_count,
     resolved_count=resolved_count,
@@ -163,7 +181,8 @@ def update_status(ticket_id, status):
             )
         except Exception as e:
             print("EMPLOYEE EMAIL FAILED:", e)
- 
+
+    
     conn.close()
 
     return redirect("/dashboard")
@@ -433,6 +452,8 @@ def classify_ticket():
         conn = sqlite3.connect("tickets.db")
         cursor = conn.cursor()
 
+        created_at = datetime.date.today()
+        
         cursor.execute("""
         INSERT INTO tickets (
         employee_name,
@@ -442,11 +463,12 @@ def classify_ticket():
         ticket_text, 
         category, 
         priority,
-        status
+        status,
+        created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, 
-        (name, employeeId, department, employeeEmail, original_text, prediction, priority, "Open"))
+        (name, employeeId, department, employeeEmail, original_text, prediction, priority, "Open", created_at))
 
         conn.commit()
         conn.close()

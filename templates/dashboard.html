@@ -638,6 +638,7 @@ Back to Home
 <th>Category</th>
 <th>Priority</th>
 <th>Status</th>
+<th>Date</th>
 </tr>
 
 </thead>
@@ -650,13 +651,17 @@ Back to Home
 
 <tr data-category="{{ ticket[6] }}">
 
-    <td>{{ ticket[0] }}</td>
-    <td>{{ ticket[1] }}</td>
-    <td>{{ ticket[2] }}</td>
-    <td>{{ ticket[3] }}</td>
-    <td>{{ ticket[4] }}</td>
-    <td>{{ ticket[5] }}</td>
-    <td>{{ ticket[6] }}</td>
+    <td>{{ ticket[0] }}</td>  <!-- ID -->
+    <td>{{ ticket[1] }}</td>  <!-- Name -->
+    <td>{{ ticket[2] }}</td>  <!-- Employee ID -->
+    <td>{{ ticket[3] }}</td>  <!-- Department -->
+    <td>{{ ticket[4] }}</td>  <!-- Email -->
+    <td>{{ ticket[5] }}</td>  <!-- Ticket -->
+    <td>{{ ticket[6] }}</td>  <!-- Category -->
+    
+
+
+
 
     <td>
 
@@ -717,6 +722,7 @@ Back to Home
 
         {% endif %}
     </td>
+    <td>{{ ticket[9] }}</td>  <!-- ✅ Date -->
 
 </tr>
 
