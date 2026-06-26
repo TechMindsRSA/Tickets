@@ -1,11 +1,13 @@
 import datetime
-
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 import pickle
 import json
 import os
 import matplotlib
 matplotlib.use('Agg')
+from analytics import get_dashboard_stats, get_ticket_trend
+from forecast import simple_forecast
+from datetime import datetime, timedelta
 
 import sqlite3
 from textblob import TextBlob
@@ -452,7 +454,7 @@ def classify_ticket():
         conn = sqlite3.connect("tickets.db")
         cursor = conn.cursor()
 
-        created_at = datetime.date.today()
+        created_at = datetime.today().date()
         
         cursor.execute("""
         INSERT INTO tickets (
@@ -493,7 +495,29 @@ def classify_ticket():
         print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route("/predictive")
+def predictive():
 
+    stats = get_dashboard_stats()
+    dates, counts = get_ticket_trend()
+    predictions = simple_forecast(counts)
+
+    from datetime import datetime, timedelta
+
+    today = datetime.today()
+    future_dates = [
+        (today + timedelta(days=i+1)).strftime("%d %b")
+        for i in range(5)
+    ]
+
+    return render_template(
+        "predictive.html",
+        stats=stats,
+        dates=dates,
+        counts=counts,
+        predictions=predictions,
+        future_dates=future_dates
+    )
 
 
 

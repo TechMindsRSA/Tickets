@@ -59,6 +59,7 @@ href="{{ url_for('static', filename='style.css') }}">
         <input
             type="email"
             id="employeeEmail"
+            value="phadedumiie@gmail.com"
             placeholder="Employee Email">
     </div>    
 
@@ -78,6 +79,8 @@ href="{{ url_for('static', filename='style.css') }}">
         <a href="/login" class="btn-admin">
             Admin Login
         </a>
+      
+
 
         <div class="result-section">
 
@@ -136,42 +139,33 @@ href="{{ url_for('static', filename='style.css') }}">
 </div>
 
 <script>
-
 async function classifyTicket() {
 
-    const name =
-        document.getElementById("employeeName").value;
+    const name = document.getElementById("employeeName").value;
+    const employeeId = document.getElementById("employeeId").value;
+    const department = document.getElementById("department").value;
+    const employeeEmail = document.getElementById("employeeEmail").value;
+    const text = document.getElementById("ticketText").value;
 
-    const employeeId =
-        document.getElementById("employeeId").value;
-
-    const department =
-        document.getElementById("department").value;
-
-    const employeeEmail =
-        document.getElementById("employeeEmail").value;
-
-    const text =
-        document.getElementById("ticketText").value;
-
-    const response = await fetch("/classify", {
+    const res = await fetch("/classify", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            name,
-            employeeId,
-            department,
-            employeeEmail,
-            text
+            name: name,
+            employeeId: employeeId,
+            department: department,
+            employeeEmail: employeeEmail,
+            text: text
         })
     });
 
-    const data = await response.json();
+    const data = await res.json();
 
     console.log(data);
 
+    // ✅ UPDATE CORRECT ELEMENTS
     document.getElementById("categoryResult").innerHTML =
         data.predicted_category;
 

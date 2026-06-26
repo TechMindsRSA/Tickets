@@ -281,3 +281,196 @@ textarea:focus{
     display:flex;
     background:red;
 }
+
+
+*{
+    font-family: Poppins, sans-serif;
+}
+
+
+body {
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+}
+
+
+h1{
+    margin-bottom:40px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 25px rgba(0,0,0,.1);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+
+.number{
+    font-size:40px;
+    font-weight:bold;
+    color:#2563eb;
+}
+
+.chart-container {
+    margin: 40px auto;              /* ✅ center horizontally */
+
+    width: 80%;                     /* ✅ shrink width */
+    max-width: 900px;              /* ✅ limit size */
+
+    background: white;
+    padding: 20px 30px 50px 30px;  /* ✅ extra bottom space */
+
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
+    height: 320px;                 /* ✅ enough for labels */
+}
+
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+
+.forecast {
+    margin-top: 50px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+
+}
+.forecast-box {
+    margin-top: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.forecast-box ul {
+    list-style: none;
+    padding: 0;
+}
+
+.forecast-box li {
+    margin: 10px 0;
+    font-size: 18px;
+}
+
+
+.forecast-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 25px;
+}
+
+
+
+.forecast-card {
+    background: white;
+    padding: 22px;          
+    border-radius: 30px;
+    width: 120px;           
+    box-shadow: 0 6px 18px rgba(65, 73, 55, 0.08);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.forecast-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 20 15px 25px rgba(224, 34, 34, 0.068);
+}
+
+
+.forecast-card .day {
+    font-size: 15px;
+    color: #111010;
+}
+
+.forecast-card .value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.forecast-card .label {
+    font-size: 15px;
+}
+
+.forecast-note {
+    text-align: center;
+    color: #d16747;
+
+    font-size: 25px;      
+    margin-top: 20px;
+
+    max-width: 450px;     
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.day {
+    font-size: 15px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.label {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 6px;
+}
+/* ✅ future styling */
+.forecast-card.future {
+    background: #f8fafc;
+}
+
+/* ✅ optional stronger highlight */
+.forecast-card.future .value {
+    color: #2563eb;
+}
+
+.btn-predictive {
+    display: block;
+    margin-top: 20px;
+    width:fit-content;
+
+    padding: 12px 20px;
+    border-radius: 10px;
+
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+
+    transition: all 0.2s ease;
+}
+
+/* ✅ hover effect */
+.btn-predictive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}

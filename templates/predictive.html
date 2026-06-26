@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Predictive Analytics Dashboard</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<h1>Predictive Analytics Dashboard</h1>
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Total Tickets</h3>
+        <div class="number">
+            {{ stats.total_tickets }}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Open Tickets</h3>
+        <div class="number">
+            {{ stats.open_tickets }}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Resolved Tickets</h3>
+        <div class="number">
+            {{ stats.resolved_tickets }}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Critical Tickets</h3>
+        <div class="number">
+            {{ stats.critical_tickets }}
+        </div>
+    </div>
+
+</div>
+<div class="chart-container">
+    <h2>Ticket Trend</h2>
+    <canvas id="trendChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// ✅ get data from Flask safely
+const labelsRaw = JSON.parse('{{ dates | tojson | safe }}');
+const futureLabels = JSON.parse('{{ future_dates | tojson | safe }}');
+const actualData = JSON.parse('{{ counts | tojson | safe }}');
+const predictions = JSON.parse('{{ predictions | tojson | safe }}');
+
+// ✅ format real dates
+const labels = labelsRaw.map(d => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short'
+    });
+});
+
+// ✅ combine real + future labels
+const allLabels = labels.concat(futureLabels);
+
+// ✅ extend actual data to match length
+const actualFull = actualData.concat(
+    new Array(predictions.length).fill(null)
+);
+
+// ✅ shift predictions forward
+const hasForecast = predictions.some(p => p > 0);
+
+const predictionFull = hasForecast
+    ? new Array(actualData.length).fill(null).concat(predictions)
+    : null;
+
+// ✅ create chart
+const ctx = document.getElementById('trendChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: allLabels,
+
+        datasets: [
+        {
+            label: 'Actual Tickets',
+            data: actualFull,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            fill: true,
+            tension: 0.5,
+            pointRadius: 6
+        },
+        {
+            label: 'Forecast',
+            data: predictionFull,
+            borderColor: '#94a3b8',
+            borderDash: [5, 5],
+            tension: 0.4,
+            pointRadius: 4,
+            hidden: !hasForecast
+        }
+        ]
+    },
+
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        layout: {
+            padding: {
+                bottom: 30
+            }
+        },
+
+        plugins: {
+            legend: {
+                display: true
+            }
+        },
+
+        scales: {
+            x: {
+                offset: true
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+
+
+
+</script>
+
+<div class="forecast">
+    <h2>Forecast (Next 5 Days)</h2>
+
+    <div class="forecast-grid">
+        {% for p in predictions %}
+            <div class="forecast-card future">
+                <div class="day">{{ future_dates[loop.index0] }}</div>
+
+                <div class="value">
+                    {% if p == 0 %}
+                        -
+                    {% else %}
+                        {{ p }}
+                    {% endif %}
+                </div>
+
+                <div class="label">expected tickets</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    
+    <p class="forecast-note">
+        Forecast shows expected ticket volume for upcoming days
+    </p>
+
+</div>
+
+
+
+</body>
+</html>

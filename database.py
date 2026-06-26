@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS tickets (
     ticket_text TEXT,
     category TEXT,
     priority TEXT,
-    status TEXT
+    status TEXT,
+    created_at DATE
 )
 """)
 
@@ -21,3 +22,10 @@ conn.commit()
 conn.close()
 
 print("Database created successfully!")
+import sqlite3
+import os
+
+def get_connection():
+    db_path = os.path.join(os.getcwd(), "tickets.db")
+    conn = sqlite3.connect(db_path)
+    return conn

@@ -4,9 +4,13 @@
 <head>
 
     <title>Enterprise Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <link rel="preconnect"
     href="https://fonts.googleapis.com">
+
+    
+
 
     <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -774,7 +778,9 @@ Back to Home
     <h4>🤖 Automated Summary</h4>
     <p>{{ summary_text }}</p>
 
-
+    <a href="/predictive" class="btn-predictive">
+        View Predictive Analytics
+    </a>
 </div>
 
 <script>
