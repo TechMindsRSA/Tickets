@@ -125,6 +125,31 @@ href="{{ url_for('static', filename='style.css') }}">
         Waiting...
     </p>
 
+    <div class="result-card">
+        <span class="result-label">
+            Assigned To:
+        </span>
+        <p id="assignedResult" style="font-weight:600;
+        color:#1a202c;
+        ">
+        </p>
+    </div>
+
+    <div class="result-card">
+
+        <span class="result-label">
+            Workflow:
+        </span>
+
+        <p id="workflowResult" style="
+        background: #eef2ff;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        ">
+            Waiting...
+        </p>
+    </div>
 </div>
 
         </div>
@@ -173,6 +198,10 @@ async function classifyTicket() {
 
     document.getElementById("responseResult").innerHTML =
         data.response;
+    document.getElementById("assignedResult").innerHTML =
+        data.assigned_to;
+    document.getElementById("workflowResult").innerHTML =
+        data.workflow;
 }
 </script>
 

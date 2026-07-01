@@ -58,7 +58,7 @@ def dashboard():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status,created_at
+    SELECT id, employee_name, employee_id, department, employee_email, ticket_text, category, priority, status,created_at, risk_level
     FROM tickets
     ORDER BY id DESC
     """)
@@ -91,6 +91,19 @@ def dashboard():
     medium_count = sum(1 for t in tickets if t[7] == "Medium")
     low_count = sum(1 for t in tickets if t[7] == "Low")
     critical_count = sum(1 for t in tickets if t[7] == "Critical")
+
+    high_risk_count = sum(1 for t in tickets if t[10] == "High")
+
+    # ✅ Risk evaluation summary
+
+    risk_summary = ""
+
+    if high_risk_count == 0:
+        risk_summary = "No high-risk tickets detected. System is operating safely."
+    elif high_risk_count <= 2:
+        risk_summary = "A few high-risk tickets detected. Monitor sensitive cases."
+    else:
+        risk_summary = "High number of risky tickets detected. Immediate attention is required."
 
 
     open_count = sum(1 for t in tickets if t[8] == "Open")
@@ -148,7 +161,10 @@ def dashboard():
     resolved_count=resolved_count,
 
     notification_count=total_tickets,
-    alert_tickets=alert_tickets
+    alert_tickets=alert_tickets,
+
+    high_risk_count=high_risk_count,
+    risk_summary=risk_summary
     )
 @app.route("/update_status/<int:ticket_id>/<status>")
 def update_status(ticket_id, status):
@@ -360,123 +376,193 @@ def logout():
 
     return redirect("/")
 
-# Classify ticket route
 @app.route("/classify", methods=["POST"])
 def classify_ticket():
-
     try:
         data = request.json
+
         name = data["name"]
         employeeId = data["employeeId"]
         department = data["department"]
         employeeEmail = data["employeeEmail"]
         original_text = data["text"]
 
-        # Auto-correct spelling
+        # 🔧 Normalize text (VERY IMPORTANT)
+        ticket_lower = original_text.lower()
+
+        # ✅ Auto-correct (optional but fine)
         corrected_text = str(TextBlob(original_text).correct())
 
-        # Vectorize input
+        # ✅ Vectorize
         text_vector = vectorizer.transform([corrected_text])
 
-        # Predict category
+        # ✅ Predict category
         prediction = model.predict(text_vector)[0]
+        # ✅ AUTOMATIC ROUTING
 
-        # Priority detection
+        if prediction == "HR":
+            assigned_to = "HR Team"
+
+        elif prediction == "IT":
+            assigned_to = "IT Support"
+
+        elif prediction == "Finance":
+            assigned_to = "Finance Department"
+
+        else:
+            assigned_to = "Operations Team"
+
+        # -----------------------------
+        # ✅ PRIORITY DETECTION FIRST
+        # -----------------------------
 
         critical_keywords = [
-        "production has stopped",
-        "server is down",
-        "system outage",
-        "network outage",
-        "cannot work",
-        "business is down"
+            "production has stopped",
+            "server is down",
+            "system outage",
+            "network outage",
+            "cannot work",
+            "business is down"
         ]
 
         high_priority_keywords = [
-        "not working",
-        "computer is not working",
-        "laptop is not working",
-        "internet down",
-        "vpn issue",
-        "printer is not working",
-        "harassment",
-        "harassed",
-        "urgent",
-        "harassment",
-        "emergency",
-        "violence",
-        "abuse",
-        "harssed"
+            "not working",
+            "computer is not working",
+            "laptop is not working",
+            "internet down",
+            "vpn issue",
+            "printer is not working",
+            "harassment",
+            "harassed",
+            "urgent",
+            "emergency",
+            "violence",
+            "abuse"
         ]
 
         medium_priority_keywords = [
-        "slow",
-        "password reset",
-        "salary",
-        "delay",
-        "complaint",
-        "issue"
+            "slow",
+            "password reset",
+            "salary",
+            "delay",
+            "complaint",
+            "issue"
         ]
-
-        ticket_lower = original_text.lower()
 
         priority = "Low"
 
-        # Critical priority
+        # ✅ Critical priority
         for word in critical_keywords:
             if word in ticket_lower:
                 priority = "Critical"
 
-        # High priority
+        # ✅ High priority
         for word in high_priority_keywords:
             if word in ticket_lower and priority != "Critical":
                 priority = "High"
 
-        # Medium priority
+        # ✅ Medium priority
         for word in medium_priority_keywords:
             if word in ticket_lower and priority not in ["Critical", "High"]:
                 priority = "Medium"
 
-        ai_response = generate_response(
-            prediction, priority)
+        # ✅ AUTOMATED WORKFLOW STATUS
 
-        # Final result
+        status = "Open"  # default
+
+        if priority in ["High", "Critical"]:
+            status = "In Progress"
+        print("AUTO STATUS:", status)
+        # -----------------------------
+        # ✅ RISK DETECTION (AFTER PRIORITY ✅)
+        # -----------------------------
+
+        risk_level = "Low"
+
+        sensitive_keywords = [
+            "harassment",
+            "harassed",
+            "abuse",
+            "violence",
+            "discrimination"
+        ]
+
+        for word in sensitive_keywords:
+            if word in ticket_lower:
+                risk_level = "High"
+
+        # ✅ Also mark high risk if critical ticket
+        if priority == "Critical":
+            risk_level = "High"
+
+        # -----------------------------
+        # ✅ AI RESPONSE
+        # -----------------------------
+
+        ai_response = generate_response(prediction, priority)
+        # ✅ AUTOMATED RISK TRIGGER
+        if risk_level == "High":
+            print("⚠️ HIGH RISK ALERT TRIGGERED")
+
+        # ✅ WORKFLOW LOG (NEW)
+        workflow_note = f"Assigned to {assigned_to}, status set to {status}, risk level {risk_level}"
+        print("WORKFLOW:", workflow_note)
+
+        # -----------------------------
+        # ✅ RESULT (API OUTPUT)
+        # -----------------------------
+
         result = {
             "ticket": original_text,
             "predicted_category": prediction,
             "priority": priority,
-            "response": ai_response
+            "response": ai_response,
+            "risk_level": risk_level,
+            "assigned_to": assigned_to,
+            "workflow": workflow_note
         }
 
-        
+        # ✅ DEBUG (NOW WORKS)
+        print("TEXT:", original_text)
+        print("PRIORITY:", priority)
+        print("RISK LEVEL:", risk_level)
+        print("ASSIGNED TO:", assigned_to)
+        print("WORKFLOW NOTE:", workflow_note)
+        # -----------------------------
+        # ✅ SAVE TO DB
+        # -----------------------------
 
-        # Save to SQLite database
         conn = sqlite3.connect("tickets.db")
         cursor = conn.cursor()
 
         created_at = datetime.today().date()
-        
+
         cursor.execute("""
         INSERT INTO tickets (
-        employee_name,
-        employee_id,
-        department, 
-        employee_email, 
-        ticket_text, 
-        category, 
-        priority,
-        status,
-        created_at
+            employee_name,
+            employee_id,
+            department,
+            employee_email,
+            ticket_text,
+            category,
+            priority,
+            status,
+            created_at,
+            risk_level
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, 
-        (name, employeeId, department, employeeEmail, original_text, prediction, priority, "Open", created_at))
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            name, employeeId, department,
+            employeeEmail, original_text,
+            prediction, priority,
+            status, created_at, risk_level
+        ))
 
         conn.commit()
         conn.close()
-        if priority in ["High", "Critical"]:
 
-            print("HIGH PRIORITY DETECTED")
+        # ✅ EMAIL ALERT
+        if priority in ["High", "Critical"]:
             try:
                 send_admin_email(
                     name,
@@ -488,9 +574,9 @@ def classify_ticket():
                 )
             except Exception as e:
                 print("ADMIN EMAIL FAILED:", e)
-        
+
         return jsonify(result)
-    
+
     except Exception as e:
         print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500

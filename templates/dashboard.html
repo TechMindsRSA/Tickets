@@ -427,8 +427,19 @@
                 <h2>{{ critical_count }}</h2>
                 <p>Critical Tickets</p>
             </div>
+            
+            <div class="stat-card" onclick="filterPriority('High')">
+                <h2>{{ high_risk_count }}</h2>
+                <p>High Risk Tickets</p>
+            </div>
+
         </div>
     </div>
+    <div class="card" style="margin-top:20px;">
+        <h3>Risk Summary</h3>
+        <p>{{ risk_summary }}</p>
+    </div>
+
 
     </details>
 
@@ -643,11 +654,12 @@ Back to Home
 <th>Priority</th>
 <th>Status</th>
 <th>Date</th>
+<th> Risk </th>
 </tr>
 
 </thead>
 
-<h2 id="ticketSection">Filtered Tickets</h2>
+<h2 id="ticketSecion">Filtered Tickets</h2>
 
 <tbody id="ticketTable">
 
@@ -663,10 +675,6 @@ Back to Home
     <td>{{ ticket[5] }}</td>  <!-- Ticket -->
     <td>{{ ticket[6] }}</td>  <!-- Category -->
     
-
-
-
-
     <td>
 
         {% if ticket[7] == "Critical" %}
@@ -727,6 +735,16 @@ Back to Home
         {% endif %}
     </td>
     <td>{{ ticket[9] }}</td>  <!-- ✅ Date -->
+
+    
+    <td>
+        {% if ticket[10] == "High" %}
+            <span class="high">High</span>
+        {% else %}
+            <span class="low">Low</span>
+        {% endif %}
+    </td>
+
 
 </tr>
 
